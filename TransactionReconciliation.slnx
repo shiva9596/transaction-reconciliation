@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TransactionReconciliation.Console/TransactionReconciliation.Console.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TransactionReconciliation.Tests/TransactionReconciliation.Tests.csproj" />
+  </Folder>
+</Solution>
