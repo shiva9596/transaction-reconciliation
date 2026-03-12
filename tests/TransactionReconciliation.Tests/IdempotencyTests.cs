@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using TransactionReconciliation.Console.Configuration;
@@ -70,8 +69,8 @@ public class IdempotencyTests
 
             await secondService.ProcessAsync(CancellationToken.None);
 
-            dbContext.Transactions.Count().Should().Be(transactionCountAfterFirstRun);
-            dbContext.TransactionAudits.Count().Should().Be(auditCountAfterFirstRun);
+            Assert.Equal(transactionCountAfterFirstRun, dbContext.Transactions.Count());
+            Assert.Equal(auditCountAfterFirstRun, dbContext.TransactionAudits.Count());
         }
         finally
         {

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using TransactionReconciliation.Console.Configuration;
@@ -51,13 +50,13 @@ public class ReconciliationServiceTests
 
             await service.ProcessAsync(CancellationToken.None);
 
-            dbContext.Transactions.Count().Should().Be(1);
-            dbContext.TransactionAudits.Count().Should().Be(1);
+            Assert.Equal(1, dbContext.Transactions.Count());
+            Assert.Equal(1, dbContext.TransactionAudits.Count());
 
             var transaction = dbContext.Transactions.Single();
-            transaction.TransactionId.Should().Be("TXN-1001");
-            transaction.Status.Should().Be(TransactionStatus.Active);
-            transaction.Amount.Should().Be(50.25m);
+            Assert.Equal("TXN-1001", transaction.TransactionId);
+            Assert.Equal(TransactionStatus.Active, transaction.Status);
+            Assert.Equal(50.25m, transaction.Amount);
         }
         finally
         {
@@ -134,10 +133,9 @@ public class ReconciliationServiceTests
             await updatedService.ProcessAsync(CancellationToken.None);
 
             var transaction = dbContext.Transactions.Single();
-            transaction.ProductName.Should().Be("Fuel-Premium");
-            transaction.Amount.Should().Be(60.00m);
-
-            dbContext.TransactionAudits.Count().Should().Be(3);
+            Assert.Equal("Fuel-Premium", transaction.ProductName);
+            Assert.Equal(60.00m, transaction.Amount);
+            Assert.Equal(3, dbContext.TransactionAudits.Count());
         }
         finally
         {

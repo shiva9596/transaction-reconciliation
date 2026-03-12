@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using TransactionReconciliation.Console.Configuration;
@@ -69,10 +68,9 @@ public class RevocationTests
             await secondRun.ProcessAsync(CancellationToken.None);
 
             var transaction = dbContext.Transactions.Single();
-            transaction.Status.Should().Be(TransactionStatus.Revoked);
-            transaction.RevokedAtUtc.Should().NotBeNull();
-
-            dbContext.TransactionAudits.Any(x => x.ChangeType == AuditChangeType.Revoked).Should().BeTrue();
+            Assert.Equal(TransactionStatus.Revoked, transaction.Status);
+            Assert.NotNull(transaction.RevokedAtUtc);
+            Assert.True(dbContext.TransactionAudits.Any(x => x.ChangeType == AuditChangeType.Revoked));
         }
         finally
         {
