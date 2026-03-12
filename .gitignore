@@ -5,6 +5,8 @@ obj/
 TestResults/
 *.user
 *.suo
-*.db
 *.sqlite
 *.log
+*.db
+*.db-shm
+*.db-wal
