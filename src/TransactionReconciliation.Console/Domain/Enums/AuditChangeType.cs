@@ -1,8 +1,9 @@
 namespace TransactionReconciliation.Console.Domain.Enums;
 
-public enum TransactionStatus
+public enum AuditChangeType
 {
-    Active = 1,
-    Revoked = 2,
-    Finalized = 3
+    Insert = 1,
+    Update = 2,
+    Revoked = 3,
+    Finalized = 4
 }
