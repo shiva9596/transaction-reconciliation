@@ -25,13 +25,15 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Data\Mocks\mock-transactions.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+<ItemGroup>
+  <None Update="appsettings.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+
+  <None Update="Data\Mocks\mock-transactions.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <TargetPath>Data\Mocks\mock-transactions.json</TargetPath>
+  </None>
+</ItemGroup>
 
 </Project>

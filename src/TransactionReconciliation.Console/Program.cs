@@ -10,7 +10,9 @@ using TransactionReconciliation.Console.Services.Interfaces;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
+builder.Configuration
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
 
 builder.Services.Configure<FeedOptions>(builder.Configuration.GetSection("TransactionFeed"));
 builder.Services.Configure<ProcessingOptions>(builder.Configuration.GetSection("Processing"));
@@ -20,8 +22,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ITransactionFeedClient, MockTransactionFeedClient>();
 builder.Services.AddScoped<ICardDataProtector, CardDataProtector>();
-builder.Services.AddScoped<IReconciliationService, ReconciliationService>();
 builder.Services.AddScoped<IClock, SystemClock>();
+builder.Services.AddScoped<IReconciliationService, ReconciliationService>();
 
 builder.Services.AddLogging(logging =>
 {

@@ -22,13 +22,17 @@ public class MockTransactionFeedClient : ITransactionFeedClient
             throw new InvalidOperationException("Transaction feed JSON file path is not configured.");
         }
 
-        if (!File.Exists(_feedOptions.JsonFilePath))
+        var resolvedPath = Path.IsPathRooted(_feedOptions.JsonFilePath)
+            ? _feedOptions.JsonFilePath
+            : Path.Combine(AppContext.BaseDirectory, _feedOptions.JsonFilePath);
+
+        if (!File.Exists(resolvedPath))
         {
             throw new FileNotFoundException(
-                $"Transaction feed file was not found at path '{_feedOptions.JsonFilePath}'.");
+                $"Transaction feed file was not found at path '{resolvedPath}'.");
         }
 
-        await using var stream = File.OpenRead(_feedOptions.JsonFilePath);
+        await using var stream = File.OpenRead(resolvedPath);
 
         var transactions = await JsonSerializer.DeserializeAsync<List<IncomingTransactionDto>>(
             stream,
