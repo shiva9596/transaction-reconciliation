@@ -3,6 +3,8 @@
 ## Overview
 This project is a .NET 10 console application that ingests a mocked JSON snapshot of transactions from the last 24 hours, reconciles them into a SQLite database using Entity Framework Core, records audit history, revokes missing in-window records, optionally finalizes records older than 24 hours, and supports idempotent reruns.
 
+The solution was implemented as a maintainable reconciliation job with clear separation between configuration, persistence, domain models, services, and tests.
+
 ## Tech Stack
 - .NET 10
 - C#
@@ -35,14 +37,14 @@ The solution is structured as a small reconciliation pipeline.
 - A clock abstraction was introduced to support deterministic tests for time-based logic
 
 Each reconciliation run:
-1. loads the current 24-hour snapshot
-2. normalizes incoming transactions
-3. inserts new transactions
-4. updates existing transactions only when tracked fields changed
-5. records audit entries for meaningful changes
-6. revokes in-window transactions missing from the current snapshot
-7. optionally finalizes records older than 24 hours
-8. commits the run inside a single database transaction
+1. Loads the current 24-hour snapshot
+2. Normalizes incoming transactions
+3. Inserts new transactions
+4. Updates existing transactions only when tracked fields changed
+5. Records audit entries for meaningful changes
+6. Revokes in-window transactions missing from the current snapshot
+7. Optionally finalizes records older than 24 hours
+8. Commits the run inside a single database transaction
 
 ## Assumptions
 - `TransactionId` is unique and stable across snapshots
@@ -55,8 +57,8 @@ Each reconciliation run:
 ## Database
 The project uses EF Core code-first with SQLite.
 
-### Main tables
-- `Transactions` - current state
+### Main Tables
+- `Transactions` - current state of each transaction
 - `TransactionAudits` - history of changes
 
 ### Migration
@@ -76,3 +78,27 @@ Configured sections:
 ### Restore dependencies
 ```powershell
 dotnet restore
+
+### Build the solution
+```powershell
+dotnet build
+
+### Run the application
+```powershell
+dotnet run --project .\src\TransactionReconciliation.Console\TransactionReconciliation.Console.csproj
+
+### How to Run Tests
+```powershell
+dotnet test
+
+
+### Testing Approach
+
+The automated tests focus on the highest-risk business rules:
+
+- inserting a new transaction
+- updating an existing transaction when tracked fields change
+- revoking a missing in-window transaction
+- ensuring idempotent reruns do not create duplicate transactions or duplicate audit entries
+
+Tests use an in-memory SQLite database to exercise real EF Core behavior, and a fake clock to make time-based rules deterministic.
