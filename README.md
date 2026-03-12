@@ -78,19 +78,22 @@ Configured sections:
 ### Restore dependencies
 ```powershell
 dotnet restore
+```
 
 ### Build the solution
 ```powershell
 dotnet build
+```
 
 ### Run the application
 ```powershell
 dotnet run --project .\src\TransactionReconciliation.Console\TransactionReconciliation.Console.csproj
+```
 
-### How to Run Tests
+### Run tests
 ```powershell
 dotnet test
-
+```
 
 ### Testing Approach
 
