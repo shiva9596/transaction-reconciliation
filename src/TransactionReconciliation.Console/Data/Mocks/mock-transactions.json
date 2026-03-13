@@ -5,7 +5,7 @@
     "locationCode": "STORE-101",
     "productName": "Fuel-Regular",
     "amount": 45.75,
-    "timestamp": "2026-03-11T20:00:00Z"
+    "timestamp": "2026-03-13T01:00:00Z"
   },
   {
     "transactionId": "TXN-1002",
@@ -13,7 +13,7 @@
     "locationCode": "STORE-205",
     "productName": "Fuel-Premium",
     "amount": 62.10,
-    "timestamp": "2026-03-11T21:15:00Z"
+    "timestamp": "2026-03-13T01:15:00Z"
   },
   {
     "transactionId": "TXN-1003",
@@ -21,6 +21,14 @@
     "locationCode": "STORE-101",
     "productName": "Car-Wash",
     "amount": 15.00,
-    "timestamp": "2026-03-11T22:05:00Z"
+    "timestamp": "2026-03-13T02:05:00Z"
+  },
+  {
+    "transactionId": "TXN-OLD-001",
+    "cardNumber": "4111111111111111",
+    "locationCode": "STORE-303",
+    "productName": "Fuel-Diesel",
+    "amount": 95.00,
+    "timestamp": "2026-03-10T08:00:00Z"
   }
 ]
