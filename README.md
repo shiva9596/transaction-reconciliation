@@ -7,6 +7,7 @@ A .NET 10 console application that ingests a mocked JSON snapshot of card transa
 ## Table of Contents
 
 - [Overview](#overview)
+- [Solution](#solution)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Core Features](#core-features)
@@ -25,6 +26,91 @@ A .NET 10 console application that ingests a mocked JSON snapshot of card transa
 This project implements a reliable hourly ingestion job for a retail payments platform. Each run fetches a 24-hour JSON snapshot of card transactions, upserts records by `TransactionId`, detects and records field-level changes, revokes transactions that have disappeared from the snapshot while still within the 24-hour window, and optionally finalizes records older than 24 hours.
 
 The application is designed to run once per invocation (triggered by an external scheduler) and produces consistent, idempotent results when re-run with the same input.
+
+---
+
+## Solution
+
+### Problem Summary
+
+The exercise required building a reliable transaction ingestion job that:
+- Fetches a JSON snapshot of the last 24 hours of card transactions from a mocked API
+- Reconciles them into a persistent database with upsert logic
+- Detects and records field-level changes on existing transactions
+- Revokes transactions that were previously seen but are no longer in the snapshot
+- Optionally finalizes records older than the 24-hour window
+- Is fully idempotent — re-running with the same input produces no side effects
+
+### My Approach
+
+**Starting point — understanding the data lifecycle**
+
+The first thing I mapped out was the full lifecycle of a transaction record:
+
+```
+Incoming feed → Normalize → Insert (new) or Compare (existing)
+                                          ↓
+                               Changed → Update + Audit
+                               Unchanged → touch LastSeenAtUtc only
+                                          ↓
+                         Missing from feed + in window → Revoke
+                         Older than 24h window → Finalize
+```
+
+This made it clear the reconciliation logic needed to operate in distinct phases rather than one monolithic loop, which shaped the structure of `ReconciliationService`.
+
+---
+
+**Key decisions and why**
+
+**1. Single database transaction per run**
+
+Wrapping the entire run in one `BeginTransactionAsync` / `CommitAsync` block ensures atomicity. If anything fails mid-run — a bad record, a network hiccup, an exception — nothing is partially committed. The next run starts from a clean state and processes the full snapshot again.
+
+**2. Field-level change detection via `TransactionComparer`**
+
+Rather than replacing every record on every run, I compare the incoming values against what is stored field by field. Only fields that actually changed produce an audit entry. This keeps the audit log meaningful — it tells you exactly what changed and when, rather than producing noise on every run.
+
+The comparer is a separate static utility so it can be unit tested independently and extended without touching the service logic.
+
+**3. Separate revocation pass**
+
+Revocations are handled in a second pass after all upserts, not inside the upsert loop. This avoids a subtle bug: if you check for missing records while iterating inserts, newly inserted records haven't been saved yet and could be incorrectly flagged. The second pass queries the database for all in-window records and checks them against the incoming ID set.
+
+**4. ChangeTracker for same-run finalization**
+
+When a record with an old timestamp is inserted for the first time, it needs to be finalized in the same run. Since `SaveChanges` hasn't been called yet at that point, the record isn't in the database. I use EF Core's `ChangeTracker` to find newly added entities with old timestamps and include them in the finalization pass before the commit.
+
+**5. `IClock` abstraction**
+
+The system clock is injected as `IClock` rather than called via `DateTime.UtcNow` directly. In tests, a `TestClock` with a fixed timestamp is injected instead. This makes all time-dependent logic — cutoff calculation, `CreatedAtUtc`, `UpdatedAtUtc`, finalization — fully deterministic and reproducible.
+
+**6. Card data protection**
+
+Raw card numbers are hashed with SHA-256 immediately on ingestion via `CardDataProtector` and never written to the database. Only the hash and last 4 digits are stored. This satisfies basic PCI-DSS-style data minimization and means the database can be shared or inspected without exposing sensitive card data.
+
+---
+
+**What idempotency means in practice**
+
+Re-running the same feed twice produces:
+- No duplicate `Transactions` rows (upsert by `TransactionId`)
+- No duplicate `TransactionAudit` entries (only written when something actually changed)
+- No spurious status changes (revoked records stay revoked; finalized records are skipped entirely)
+
+This is verified directly by `IdempotencyTests.cs`.
+
+---
+
+**Trade-offs and what I would do differently at scale**
+
+| Area | Current approach | At scale |
+|---|---|---|
+| Feed source | Local JSON file via `MockTransactionFeedClient` | Replace with HTTP client behind `ITransactionFeedClient` — no other code changes needed |
+| Database | SQLite file | Swap connection string to PostgreSQL or SQL Server — EF Core migrations handle the rest |
+| Scheduling | Single-run console app | Wrap in an Azure Function timer trigger or a Hangfire job |
+| Audit storage | Same SQLite DB | Move audit table to append-only cold storage (e.g. Azure Table Storage) to avoid bloat |
+| Card hashing | SHA-256 | Replace with HMAC-SHA256 with a secret key stored in Key Vault for stronger protection |
 
 ---
 
